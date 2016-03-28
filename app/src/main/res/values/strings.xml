@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">PrivateKeep</string>
+    <string name="accessibility_service_description">Collect private data.</string>
+</resources>
