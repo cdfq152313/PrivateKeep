@@ -20,13 +20,13 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.File;
-import com.google.api.services.drive.model.FileList;
+import com.google.api.services.drive.model.About;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity
         } else if (!isDeviceOnline()) {
             Toast.makeText(this, "No network connection available.", Toast.LENGTH_SHORT).show();
         } else {
-            new SearchFileTask().execute();
+            new UserAboutTask().execute();
         }
     }
 
@@ -270,11 +270,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private class SearchFileTask extends AsyncTask<Void, Void, Void> {
+    private class UserAboutTask extends AsyncTask<Void, Void, Void> {
         private static final String TAG = "SearchFileTask";
         private com.google.api.services.drive.Drive mService = null;
 
-        SearchFileTask() {
+        UserAboutTask() {
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
             mService = new com.google.api.services.drive.Drive.Builder(
@@ -285,26 +285,26 @@ public class MainActivity extends AppCompatActivity
         }
 
         protected Void doInBackground(Void... urls) {
-            try {
-//                Log.e(TAG, mService.about().get().toString());
-                FileList result = search();
-                for (File file : result.getFiles()) {
-                    Log.e(TAG, String.format("Foud file: %s (%s)", file.getName(), file.getId()));
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            About about = getAbout();
+            if (about != null)
+                Log.i(TAG, about.getUser().getDisplayName());
+            else
+                Log.i(TAG, "Null About!!");
             return null;
         }
 
-        private FileList search() throws IOException {
-
-            FileList result = mService.files().list()
-                    .setQ("fullText contains 'hesitate' ")
-                    .setSpaces("drive")
-                    .setFields("nextPageToken, files(id, name)")
-                    .execute();
-            return result;
+        private About getAbout() {
+            About about = null;
+            try {
+                about = mService.about().get()
+                        .setFields("storageQuota,user")
+                        .execute();
+            } catch (UserRecoverableAuthIOException e) {
+                startActivityForResult(e.getIntent(), REQUEST_AUTHORIZATION);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return about;
         }
 
         protected void onProgressUpdate(Integer... progress) {
