@@ -49,7 +49,7 @@ class Facebook extends Analyzer {
     @Override
     public void start(Looper looper) {
         handler = new FacebookHandler(looper);
-        tool = new AnalyzerTool(TAG);
+        tool = new AnalyzerTool(packageName);
 //        tool.openLogFile(TAG+".json");
     }
 
@@ -87,10 +87,11 @@ class Facebook extends Analyzer {
 
 class AnalyzerTool {
     Writer jsonLog = null;
-    String TAG = null;
+    String TAG = "AnalyzerTool";
+    String packageName = null;
 
-    AnalyzerTool(String TAG) {
-        this.TAG = TAG;
+    AnalyzerTool(String packageName) {
+        this.packageName = packageName;
     }
 
     public void printNodeInformationRecursive(AccessibilityNodeInfo node) {
@@ -130,11 +131,12 @@ class AnalyzerTool {
 
         stringBuilder.append(index);
         stringBuilder.append(" : ");
-        stringBuilder.append("Text:");
-        stringBuilder.append(node.getText());
-        stringBuilder.append(" ; ");
-        stringBuilder.append("ContentDescription : ");
-        stringBuilder.append(node.getContentDescription());
+        stringBuilder.append(node.toString());
+//        stringBuilder.append("Text:");
+//        stringBuilder.append(node.getText());
+//        stringBuilder.append(" ; ");
+//        stringBuilder.append("ContentDescription : ");
+//        stringBuilder.append(node.getContentDescription());
         Log.i(TAG, stringBuilder.toString());
     }
 

