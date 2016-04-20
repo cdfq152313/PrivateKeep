@@ -77,14 +77,23 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (id) {
+            case R.id.action_choose_app:
+                launchChooseAppActivity();
+                return true;
         }
+
 
         return super.onOptionsItemSelected(item);
     }
 
-    public void test(View view) {
+    private void launchChooseAppActivity(){
+        Intent intent = new Intent();
+        intent.setClass(MainActivity.this ,ChooseAppActivity.class);
+        startActivity(intent);
+    }
+
+    public void searchOnclick(View view) {
         getResultsFromApi();
     }
 

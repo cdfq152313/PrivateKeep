@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">PrivateKeep</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_choose_app">Choose App</string>
     <string name="accessibility_service_description">Collect private data.</string>
 </resources>
