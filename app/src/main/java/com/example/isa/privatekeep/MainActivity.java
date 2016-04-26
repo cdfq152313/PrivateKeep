@@ -13,9 +13,17 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -29,8 +37,13 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.About;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -55,6 +68,17 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ListView listView = (ListView) MainActivity.this.findViewById(R.id.listView);
+        FileListAdapter adapter = new FileListAdapter(MainActivity.this, null);
+        listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//                launchReadFileActivity();
+                Toast.makeText(MainActivity.this, "Hello world", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         // Initialize credentials and service object.
         mCredential = GoogleAccountCredential.usingOAuth2(
@@ -87,14 +111,23 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private void launchChooseAppActivity(){
+    private void launchChooseAppActivity() {
         Intent intent = new Intent();
-        intent.setClass(MainActivity.this ,ChooseAppActivity.class);
+        intent.setClass(MainActivity.this, ChooseAppActivity.class);
+        startActivity(intent);
+    }
+
+    private void launchReadFileActivity() {
+        Intent intent = new Intent();
+        intent.setClass(MainActivity.this, ChooseAppActivity.class);
         startActivity(intent);
     }
 
     public void searchOnclick(View view) {
-        getResultsFromApi();
+        Toast.makeText(MainActivity.this, "Searching...", Toast.LENGTH_SHORT).show();
+        TextView textView = (TextView) findViewById(R.id.editText);
+        String keyword = textView.getText().toString();
+        searchFile(keyword);
     }
 
     /**
@@ -104,7 +137,7 @@ public class MainActivity extends AppCompatActivity
      * of the preconditions are not satisfied, the app will prompt the user as
      * appropriate.
      */
-    private void getResultsFromApi() {
+    private void searchFile(String str) {
         if (!isGooglePlayServicesAvailable()) {
             acquireGooglePlayServices();
         } else if (mCredential.getSelectedAccountName() == null) {
@@ -112,7 +145,7 @@ public class MainActivity extends AppCompatActivity
         } else if (!isDeviceOnline()) {
             Toast.makeText(this, "No network connection available.", Toast.LENGTH_SHORT).show();
         } else {
-            new UserAboutTask().execute();
+            new SearchFileTask().execute(str, null, null);
         }
     }
 
@@ -173,7 +206,7 @@ public class MainActivity extends AppCompatActivity
                                     "Google Play Services on your device and relaunch this app."
                             , Toast.LENGTH_SHORT).show();
                 } else {
-                    getResultsFromApi();
+//                    getResultsFromApi();
                 }
                 break;
             case REQUEST_ACCOUNT_PICKER:
@@ -188,13 +221,13 @@ public class MainActivity extends AppCompatActivity
                         editor.putString(PREF_ACCOUNT_NAME, accountName);
                         editor.apply();
                         mCredential.setSelectedAccountName(accountName);
-                        getResultsFromApi();
+//                        getResultsFromApi();
                     }
                 }
                 break;
             case REQUEST_AUTHORIZATION:
                 if (resultCode == RESULT_OK) {
-                    getResultsFromApi();
+//                    getResultsFromApi();
                 }
                 break;
         }
@@ -303,51 +336,145 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private class UserAboutTask extends AsyncTask<Void, Void, Void> {
+    private class SearchFileTask extends AsyncTask<String, Void, FileList> {
         private static final String TAG = "SearchFileTask";
         private com.google.api.services.drive.Drive mService = null;
 
-        UserAboutTask() {
+        SearchFileTask() {
             HttpTransport transport = AndroidHttp.newCompatibleTransport();
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
             mService = new com.google.api.services.drive.Drive.Builder(
                     transport, jsonFactory, mCredential)
                     .setApplicationName("Drive API Android Quickstart")
                     .build();
-
         }
 
-        protected Void doInBackground(Void... urls) {
-            About about = getAbout();
-            if (about != null)
-                Log.i(TAG, about.getUser().getDisplayName());
-            else
-                Log.i(TAG, "Null About!!");
-            return null;
+        @Override
+        protected FileList doInBackground(String... keywords) {
+            if (keywords == null || keywords.length == 0)
+                return null;
+            String keyword = keywords[0];
+            File folder = searchFolder();
+            FileList result = searchFile(folder, keyword);
+            for (File file : result.getFiles()) {
+                Log.i(TAG, file.getName());
+            }
+            return result;
         }
 
-        private About getAbout() {
-            About about = null;
+        private File searchFolder() {
+            File result = null;
             try {
-                about = mService.about().get()
-                        .setFields("storageQuota,user")
+                FileList fileList;
+                fileList = mService.files().list()
+                        .setQ(" name = 'PrivateData' " +
+                                "and 'root' in parents")
+                        .setSpaces("drive")
+                        .execute();
+                result = fileList.getFiles().get(0);
+                Log.i(TAG, String.format("Found file: %s (%s)", result.getName(), result.getId()));
+            } catch (UserRecoverableAuthIOException e) {
+                startActivityForResult(e.getIntent(), REQUEST_AUTHORIZATION);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ArrayIndexOutOfBoundsException e) {
+                return null;
+            }
+            return result;
+        }
+
+        private FileList searchFile(File folder, String str) {
+            FileList result = null;
+            String query = String.format(
+                    " fullText contains '%s' " +
+                            " and '%s' in parents ", str, folder.getId());
+            try {
+                result = mService.files().list()
+                        .setQ(query)
                         .execute();
             } catch (UserRecoverableAuthIOException e) {
                 startActivityForResult(e.getIntent(), REQUEST_AUTHORIZATION);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return about;
+            return result;
         }
 
-        protected void onProgressUpdate(Integer... progress) {
-
+        @Override
+        protected void onPostExecute(FileList result) {
+            ListView listView = (ListView) MainActivity.this.findViewById(R.id.listView);
+            FileListAdapter adapter = (FileListAdapter) listView.getAdapter();
+            adapter.setData(result);
+            adapter.notifyDataSetChanged();
         }
 
-        protected void onPostExecute(Long result) {
-
+        private ArrayList<String> transform2stringList(FileList filelist) {
+            ArrayList<String> result = new ArrayList<String>();
+            if (filelist == null || filelist.getFiles() == null) {
+                Log.e(TAG, "NULL Files");
+                return result;
+            }
+            for (File file : filelist.getFiles()) {
+                result.add(file.getName());
+            }
+            return result;
         }
+
     }
 
+    private class FileListAdapter extends BaseAdapter {
+        private FileList fileList;
+        private LayoutInflater layourInflater;
 
+        FileListAdapter(Context context, FileList fileList) {
+            if (fileList != null)
+                this.fileList = fileList;
+            else
+                this.fileList = new FileList();
+            this.layourInflater = LayoutInflater.from(context);
+        }
+
+        @Override
+        public int getCount() {
+            if (fileList.getFiles() == null)
+                return 0;
+            return fileList.getFiles().size();
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return fileList.getFiles().get(i);
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
+
+        @Override
+        public View getView(int i, View convertView, ViewGroup viewGroup) {
+            Holder holder;
+            if (convertView == null) {
+                convertView = layourInflater.inflate(R.layout.list_search_result, viewGroup, false);
+                holder = new Holder();
+                holder.textView = (TextView) convertView.findViewById(R.id.textView);
+
+                convertView.setTag(holder);
+            } else {
+                holder = (Holder) convertView.getTag();
+            }
+
+            File file = (File) getItem(i);
+            holder.textView.setText(file.getName());
+            return convertView;
+        }
+
+        private class Holder {
+            TextView textView;
+        }
+
+        public void setData(FileList fileList) {
+            this.fileList = fileList;
+        }
+    }
 }
