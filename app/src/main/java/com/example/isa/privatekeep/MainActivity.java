@@ -75,8 +75,8 @@ public class MainActivity extends AppCompatActivity
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//                launchReadFileActivity();
-                Toast.makeText(MainActivity.this, "Hello world", Toast.LENGTH_SHORT).show();
+                File file = (File) adapterView.getAdapter().getItem(i);
+                launchDisplayActivity(file);
             }
         });
 
@@ -117,9 +117,10 @@ public class MainActivity extends AppCompatActivity
         startActivity(intent);
     }
 
-    private void launchReadFileActivity() {
+    private void launchDisplayActivity(File file) {
         Intent intent = new Intent();
-        intent.setClass(MainActivity.this, ChooseAppActivity.class);
+        intent.setClass(MainActivity.this, DisplayActivity.class);
+        intent.putExtra("FileId", file.getId());
         startActivity(intent);
     }
 
