@@ -18,9 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -36,11 +34,8 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.About;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -120,7 +115,12 @@ public class MainActivity extends AppCompatActivity
     private void launchDisplayActivity(File file) {
         Intent intent = new Intent();
         intent.setClass(MainActivity.this, DisplayActivity.class);
+//        Bundle bundle = new Bundle();
+//        RetrivalData data = new RetrivalData(mCredential, file.getId());
+//        bundle.putSerializable("DownloadData", data);
+//        intent.putExtras(bundle);
         intent.putExtra("FileId", file.getId());
+        intent.putExtra("AccountName", mCredential.getSelectedAccountName());
         startActivity(intent);
     }
 
@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity
         } else if (!isDeviceOnline()) {
             Toast.makeText(this, "No network connection available.", Toast.LENGTH_SHORT).show();
         } else {
-            new SearchFileTask().execute(str, null, null);
+            new SearchFileTask().execute(str);
         }
     }
 
@@ -407,6 +407,7 @@ public class MainActivity extends AppCompatActivity
             FileListAdapter adapter = (FileListAdapter) listView.getAdapter();
             adapter.setData(result);
             adapter.notifyDataSetChanged();
+
         }
 
         private ArrayList<String> transform2stringList(FileList filelist) {
