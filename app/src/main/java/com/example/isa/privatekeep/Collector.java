@@ -8,6 +8,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.view.accessibility.AccessibilityEventCompat;
+import android.support.v4.view.accessibility.AccessibilityRecordCompat;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -73,13 +75,20 @@ public class Collector extends AccessibilityService {
 
         String packageName = event.getPackageName().toString();
         if (facebook.getPackageName().equals(packageName)) {
-            facebook.sendMessage(eventType, getRootInActiveWindow());
+            if(eventType == AccessibilityEvent.TYPE_VIEW_CLICKED) {
+                AccessibilityRecordCompat record = AccessibilityEventCompat.asRecord(event);
+                Log.i(TAG, String.format("X:%d , Y:%d", record.getScrollX(), record.getScrollY()) );
+//                Log.i(TAG, String.format("X:%d , Y:%d", event.getScrollX(), event.getScrollY()) );
+                facebook.sendMessage(eventType, event.getSource());
+            }
+
         }
 //        switch(eventType){
 //            case AccessibilityEvent.TYPE_VIEW_LONG_CLICKED:
 //                Log.i(TAG, "TYPE_VIEW_LONG_CLICKED");
 //                break;
 //            case AccessibilityEvent.TYPE_VIEW_SELECTED:
+
 //                Log.i(TAG, "TYPE_VIEW_SELECTED");
 //                break;
 //            case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:

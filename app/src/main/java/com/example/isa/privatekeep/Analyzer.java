@@ -18,6 +18,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by isa on 2016/3/30.
@@ -77,9 +79,69 @@ class Facebook extends Analyzer {
             AccessibilityNodeInfo node = (AccessibilityNodeInfo) msg.obj;
 
             switch (eventType) {
-                case AccessibilityEvent.TYPE_VIEW_CLICKED:
+//                case AccessibilityEvent.TYPE_VIEW_CLICKED:
+//                    tool.printNodeInformationRecursive(node);
+//                    parser(node);
+//                    break;
+                default:
                     tool.printNodeInformationRecursive(node);
-                    break;
+            }
+        }
+
+        private void parser(AccessibilityNodeInfo root){
+            List<AccessibilityNodeInfo> nodeInfoList = findAccessibilityNodeInfosByDescription(root);
+            for(AccessibilityNodeInfo nodeInfo: nodeInfoList){
+                if(nodeInfo != null){
+                    String text = nodeInfo.getContentDescription().toString();
+                    Log.i(TAG, text);
+                }
+            }
+        }
+
+        private List<AccessibilityNodeInfo> findAccessibilityNodeInfosByDescription(AccessibilityNodeInfo root){
+            List<AccessibilityNodeInfo> nodeInfoList = new ArrayList<AccessibilityNodeInfo>();
+            try {
+                findAccessibilityNodeInfosByDescriptionRecu(root, nodeInfoList);
+            } catch (Exception e) {
+                return null;
+            }
+            return nodeInfoList;
+        }
+        private boolean findAccessibilityNodeInfosByDescriptionRecu(AccessibilityNodeInfo root, List<AccessibilityNodeInfo> nodeInfoList) throws Exception {
+            if(root == null){
+                throw new Exception();
+            }
+            else{
+                boolean isProfile = isProfileNode(root);
+                if(isProfile){
+                    return true;
+                }
+                else{
+                    for (int i = 0; i < root.getChildCount(); i++) {
+                        boolean find;
+                        find = findAccessibilityNodeInfosByDescriptionRecu(root.getChild(i), nodeInfoList);
+                        if(find) nodeInfoList.add(root.getChild(i+1));
+                    }
+                    return false;
+                }
+            }
+        }
+        private boolean isProfileNode(AccessibilityNodeInfo root){
+            final String[] keywords = {"everyone", "friends", "only_me", "custom"};
+            if(root.getChildCount() != 3) return false;
+            if(! root.getChild(1).getClassName().equals("android.widget.ImageView") ) return false;
+
+            AccessibilityNodeInfo node = root.getChild(2);
+            if( node.getContentDescription() != null){
+                for(String keyword: keywords){
+                    if(keyword.contains(node.getContentDescription())){
+                        return true;
+                    }
+                }
+                return false;
+            }
+            else{
+                return false;
             }
         }
     }
@@ -132,11 +194,15 @@ class AnalyzerTool {
         stringBuilder.append(index);
         stringBuilder.append(" : ");
         stringBuilder.append(node.toString());
+//        stringBuilder.append("ContentDescription : ");
+//        stringBuilder.append(node.getContentDescription());
+//        stringBuilder.append(" ; ");
 //        stringBuilder.append("Text:");
 //        stringBuilder.append(node.getText());
 //        stringBuilder.append(" ; ");
-//        stringBuilder.append("ContentDescription : ");
-//        stringBuilder.append(node.getContentDescription());
+//        stringBuilder.append("Class:");
+//        stringBuilder.append(node.getClassName());
+
         Log.i(TAG, stringBuilder.toString());
     }
 

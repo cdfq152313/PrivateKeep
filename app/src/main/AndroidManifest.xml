@@ -40,7 +40,12 @@
             android:value="@integer/google_play_services_version" />
 
         <activity android:name=".ChooseAppActivity" />
-        <activity android:name=".DisplayActivity"></activity>
+        <activity android:name=".DisplayActivity" />
+
+        <service
+            android:name=".CloudService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>
